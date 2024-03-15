@@ -36,4 +36,3 @@ def canUnlockAll(boxes):
                     except (IndexError):
                         pass
     return all(new_l)
-  
