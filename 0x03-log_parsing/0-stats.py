@@ -20,47 +20,44 @@ status codes should be printed in ascending order
 import sys
 
 
-def process_input():
+def main():
+    """
+    Main function
+    """
+    status_codes = {"200": 0, "301": 0, "400": 0, "401": 0,
+                    "403": 0, "404": 0, "405": 0, "500": 0}
+    file_size = 0
+    count = 0
 
-    lines_read = 0
-    possible_stat_codes = {
-        200: 0,
-        301: 0,
-        400: 0,
-        401: 0,
-        403: 0,
-        404: 0,
-        405: 0,
-        500: 0
-    }
-    total_size = 0
 
+
+def  print_stats(status_codes, file_size):
+    """
+    Function that prints the stats
+    """
+    print("File size: {}".format(file_size))
+    for key in sorted(status_codes.keys()):
+        if status_codes[key] != 0:
+            print("{}: {}".format(key, status_codes[key]))
+            
     try:
-        # Read input from stdin line by line
         for line in sys.stdin:
-            line = line.split(" ")  # split each line according to spaces
-            if len(line) > 4:
-                status_code = int(line[-2])
-
-                # checking existence of status code in possible status code
-                # increment the count of that status code
-                if status_code in possible_stat_codes:
-                    possible_stat_codes[status_code] += 1
-
-                file_size = int(line[-1])
-                total_size += file_size
-
-                # increment or count number of lines read
-                lines_read += 1
-
-            if lines_read == 10:
-                lines_read = 0
-                print(f"File size: {total_size}")
-
+            count += 1
+            data = line.split()
+            try:
+                file_size += int(data[-1])
+                except:
+                pass
+            try:
+                if data[-2] in status_codes:
+                    status_codes[data[-2]] += 1
+            except:
+                pass
+            if count == 10:
+                print_stats(status_codes, file_size)
+                count = 0
     except KeyboardInterrupt:
-        # Handle keyboard interruption (CTRL + C)
-        print("Keyboard interruption detected. Exiting...")
+        print_stats(status_codes, file_size)
+        raise
 
-
-if __name__ == "__main__":
-    process_input()
+    print_stats(status_codes, file_size)
