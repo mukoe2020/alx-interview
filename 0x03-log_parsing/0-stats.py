@@ -18,46 +18,60 @@ status codes should be printed in ascending order
 """
 
 import sys
+import signal
+
+# Initialize variables to store metrics
+total_file_size = 0
+status_code_counts = {
+    200: 0,
+    301: 0,
+    400: 0,
+    401: 0,
+    403: 0,
+    404: 0,
+    405: 0,
+    500: 0
+    }
+line_count = 0
 
 
-def main():
-    """
-    Main function
-    """
-    status_codes = {"200": 0, "301": 0, "400": 0, "401": 0,
-                    "403": 0, "404": 0, "405": 0, "500": 0}
-    file_size = 0
-    count = 0
+def print_statistics():
+    print(f"File size: {total_file_size}")
+    for status_code, count in sorted(status_code_counts.items()):
+        if count > 0:
+            print(f"{status_code}: {count}")
+    print()
 
 
+def handle_interrupt(sig, frame):
+    print_statistics()
+    sys.exit(0)
 
-def  print_stats(status_codes, file_size):
-    """
-    Function that prints the stats
-    """
-    print("File size: {}".format(file_size))
-    for key in sorted(status_codes.keys()):
-        if status_codes[key] != 0:
-            print("{}: {}".format(key, status_codes[key]))
-            
+
+# Register signal handler for keyboard interruption (CTRL + C)
+signal.signal(signal.SIGINT, handle_interrupt)
+
+# Read input from stdin
+for line in sys.stdin:
     try:
-        for line in sys.stdin:
-            count += 1
-            data = line.split()
-            try:
-                file_size += int(data[-1])
-                except:
-                pass
-            try:
-                if data[-2] in status_codes:
-                    status_codes[data[-2]] += 1
-            except:
-                pass
-            if count == 10:
-                print_stats(status_codes, file_size)
-                count = 0
-    except KeyboardInterrupt:
-        print_stats(status_codes, file_size)
-        raise
+        # Parse the line
+        parts = line.split()
+        ip_address = parts[0]
+        status_code = int(parts[-2])
+        file_size = int(parts[-1])
 
-    print_stats(status_codes, file_size)
+        # Update metrics
+        total_file_size += file_size
+        status_code_counts[status_code] += 1
+        line_count += 1
+
+        # Print statistics after every 10 lines
+        if line_count % 10 == 0:
+            print_statistics()
+
+    except (IndexError, ValueError):
+        # Skip lines that do not match the specified input format
+        continue
+
+# Print final statistics when the input ends
+print_statistics()
