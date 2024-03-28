@@ -16,51 +16,51 @@ don’t print anything for this status code
 format: <status code>: <number>
 status codes should be printed in ascending order
 """
+
 import sys
 
 
-def print_stats(total_size, status_codes):
-    """
-    Print the stats
-    """
-    print("File size: {}".format(total_size))
-    for k, v in sorted(status_codes.items()):
-        if v:
-            print("{}: {}".format(k, v))
-            total_size = 0
+def process_input():
 
-status_codes = {
-    "200": 0,
-    "301": 0,
-    "400": 0,
-    "401": 0,
-    "403": 0,
-    "404": 0,
-    "405": 0,
-    "500": 0
-}
-total_size = 0
-counter = 0
+    lines_read = 0
+    possible_stat_codes = {
+        200: 0,
+        301: 0,
+        400: 0,
+        401: 0,
+        403: 0,
+        404: 0,
+        405: 0,
+        500: 0
+    }
+    total_size = 0
 
-try:
+    try:
+        # Read input from stdin line by line
+        for line in sys.stdin:
+            line = line.split(" ")  # split each line according to spaces
+            if len(line) > 4:
+                status_code = int(line[-2])
 
-    for line in sys.stdin:
-        counter += 1
-        data = line.split()
-        if len(data) > 2:
-            if data[-2] in status_codes:
-                status_codes[data[-2]] += 1
-            total_size += int(data[-1])
-        if counter == 10:
-            print_stats(total_size, status_codes)
-            counter = 0
-            print_stats(total_size, status_codes)
+                # checking existence of status code in possible status code
+                # increment the count of that status code
+                if status_code in possible_stat_codes:
+                    possible_stat_codes[status_code] += 1
 
-except KeyboardInterrupt:
-    #when the user hits ctrl+c
-    print_stats(total_size, status_codes)
-    raise
+                file_size = int(line[-1])
+                total_size += file_size
+
+                # increment or count number of lines read
+                lines_read += 1
+
+            if lines_read == 10:
+                lines_read = 0
+                print(f"File size: {total_size}")
+
+    except KeyboardInterrupt:
+        # Handle keyboard interruption (CTRL + C)
+        print("Keyboard interruption detected. Exiting...")
+
 
 if __name__ == "__main__":
-    print_stats(total_size, status_codes)
-
+    process_input()
