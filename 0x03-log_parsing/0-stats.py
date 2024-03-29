@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 """
-script that reads stdin line by line and computes metrics:
+a script that reads stdin line by line and computes metrics:
 
 Input format: <IP Address> - [<date>] "GET /projects/260 HTTP/1.1"
-<status code> <file size> (
-if the format is not this one, the line must be skipped)
+<status code> <file size>
+(if the format is not this one, the line must be skipped)
 After every 10 lines and/or a keyboard interruption (CTRL + C),
 print these statistics from the beginning:
 Total file size: File size: <total size>
@@ -18,60 +18,38 @@ status codes should be printed in ascending order
 """
 
 import sys
-import signal
+import re
 
-# Initialize variables to store metrics
-total_file_size = 0
-status_code_counts = {
-    200: 0,
-    301: 0,
-    400: 0,
-    401: 0,
-    403: 0,
-    404: 0,
-    405: 0,
-    500: 0
-    }
-line_count = 0
+lines_read = 0
+status_code_count = {}
+total_size = 0
 
 
-def print_statistics():
-    print(f"File size: {total_file_size}")
-    for status_code, count in sorted(status_code_counts.items()):
-        if count > 0:
-            print(f"{status_code}: {count}")
-    print()
+try:
+    for line in sys.stdin:
+        lines_read += 1
+        r = re.search(
+            '^\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}\\s-\\s\\[[\\d -:.]*\
+\\]\\s"GET\\s\\/projects\\/260\\sHTTP\\/1.1"\\s\\d{1,3}\\s\\d{1,4}$',
+            line)
+        if r:
+            status = re.search("(?<=1.1\" )\\d{1,3}", line)
+            file_size = re.search("\\d{1,4}$", line)
+            if status_code_count.get(status.group()):
+                status_code_count[status.group()] = status_code_count.get(
+                    status.group()) + 1
+            else:
+                status_code_count[status.group()] = 1
+            total_size = total_size + int(file_size.group())
+        else:
+            continue
 
+        if lines_read % 10 == 0:
+            print(f"File size: {total_size}")
+            for status in sorted(status_code_count):
+                print(f"{status}: {status_code_count[status]}")
 
-def handle_interrupt(sig, frame):
-    print_statistics()
-    sys.exit(0)
-
-
-# Register signal handler for keyboard interruption (CTRL + C)
-signal.signal(signal.SIGINT, handle_interrupt)
-
-# Read input from stdin
-for line in sys.stdin:
-    try:
-        # Parse the line
-        parts = line.split()
-        ip_address = parts[0]
-        status_code = int(parts[-2])
-        file_size = int(parts[-1])
-
-        # Update metrics
-        total_file_size += file_size
-        status_code_counts[status_code] += 1
-        line_count += 1
-
-        # Print statistics after every 10 lines
-        if line_count % 10 == 0:
-            print_statistics()
-
-    except (IndexError, ValueError):
-        # Skip lines that do not match the specified input format
-        continue
-
-# Print final statistics when the input ends
-print_statistics()
+finally:
+    print(f"File size: {total_size}")
+    for status in sorted(status_code_count):
+        print(f"{status}: {status_code_count[status]}")
