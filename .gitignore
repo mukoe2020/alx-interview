@@ -1,0 +1,8 @@
+# Ignore test files
+*main.py
+
+# Ignore pyc
+*.pyc
+
+# and pycache
+*__pycache__
