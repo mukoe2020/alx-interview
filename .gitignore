@@ -6,3 +6,8 @@
 
 # and pycache
 *__pycache__
+
+# ignore packages
+*node_modules
+*package-lock.json
+*package.json
